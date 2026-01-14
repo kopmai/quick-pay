@@ -1,10 +1,18 @@
 'use server'
 
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import { Order, INITIAL_ORDERS } from '@/data/orders';
+
+const kv = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+    ? createClient({
+        url: process.env.KV_REST_API_URL,
+        token: process.env.KV_REST_API_TOKEN,
+    })
+    : null;
 
 export async function getOrdersState(): Promise<Order[] | null> {
     try {
+        if (!kv) return null;
         const orders = await kv.get<Order[]>('orders');
         return orders;
     } catch (error) {
@@ -15,6 +23,7 @@ export async function getOrdersState(): Promise<Order[] | null> {
 
 export async function saveOrdersState(orders: Order[]) {
     try {
+        if (!kv) return { success: false, error: 'KV not configured' };
         await kv.set('orders', orders);
         return { success: true };
     } catch (error) {
@@ -25,6 +34,7 @@ export async function saveOrdersState(orders: Order[]) {
 
 export async function getPromptPayConfig() {
     try {
+        if (!kv) return null;
         const number = await kv.get<string>('config:number');
         const type = await kv.get<string>('config:type');
         return { number, type };
@@ -35,6 +45,7 @@ export async function getPromptPayConfig() {
 
 export async function savePromptPayConfig(number: string, type: string) {
     try {
+        if (!kv) return { success: false, error: 'KV not configured' };
         await kv.set('config:number', number);
         await kv.set('config:type', type);
         return { success: true };
