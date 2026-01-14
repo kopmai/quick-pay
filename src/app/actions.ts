@@ -14,7 +14,7 @@ export async function saveOrdersState(orders: Order[]) {
     return { success: true };
 }
 
-export async function getPromptPayConfig() {
+export async function getPromptPayConfig(): Promise<{ number: string; type: string } | null> {
     return null;
 }
 
