@@ -86,3 +86,32 @@ export async function savePromptPayConfig(number: string, type: string) {
         return { success: false, error };
     }
 }
+
+export async function checkDbConnection() {
+    try {
+        const uri = process.env.MONGODB_URI;
+        if (!uri) {
+            return { ok: false, message: 'Env Var MONGODB_URI is MISSING in Vercel Settings' };
+        }
+
+        try {
+            const conn = await dbConnect();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mongoose = (global as any).mongoose;
+
+            if (!conn) return { ok: false, message: 'dbConnect returned null (Unknown Error)' };
+
+            // Try a simple operation
+            // conn is the mongoose instance, so conn.connection.readyState should work
+            // depending on how dbConnect returns. 
+            // In our db.ts, it returns cached.conn which IS the mongoose instance.
+            const state = mongoose?.conn?.connection?.readyState ?? 'unknown';
+
+            return { ok: true, message: `Connected! (State: ${state})` };
+        } catch (connError: any) {
+            return { ok: false, message: `Connection Failed: ${connError.message}` };
+        }
+    } catch (error: any) {
+        return { ok: false, message: `Unexpected Error: ${error.message}` };
+    }
+}
