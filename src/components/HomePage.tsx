@@ -245,10 +245,21 @@ export default function HomePage() {
                         <div className="flex flex-col">
                             <span className="text-xl font-black tracking-tight text-gray-800 hidden min-[370px]:block leading-none">Quick Pay</span>
                             <div className="flex items-center gap-1 mt-1">
-                                <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500 animate-pulse' : dbStatus === 'disconnected' ? 'bg-red-500' : 'bg-gray-400'}`} />
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${dbStatus === 'connected' ? 'text-green-600' : dbStatus === 'disconnected' ? 'text-red-500' : 'text-gray-400'}`}>
-                                    {dbStatus === 'connected' ? 'Online' : dbStatus === 'disconnected' ? 'Offline' : 'Connecting...'}
-                                </span>
+                                <div
+                                    className={`flex items-center gap-1 mt-1 cursor-pointer`}
+                                    onClick={async () => {
+                                        if (dbStatus !== 'connected') {
+                                            const { checkDbConnection } = await import('@/app/actions');
+                                            const result = await checkDbConnection();
+                                            alert(`🔍 Debug Status:\n\n${result.message}`);
+                                        }
+                                    }}
+                                >
+                                    <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500 animate-pulse' : dbStatus === 'disconnected' ? 'bg-red-500' : 'bg-gray-400'}`} />
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${dbStatus === 'connected' ? 'text-green-600' : dbStatus === 'disconnected' ? 'text-red-500 hover:underline' : 'text-gray-400'}`}>
+                                        {dbStatus === 'connected' ? 'Online' : dbStatus === 'disconnected' ? 'Offline (Click to Debug)' : 'Connecting...'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
