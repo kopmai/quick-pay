@@ -3,12 +3,24 @@
 import { createClient } from '@vercel/kv';
 import { Order, INITIAL_ORDERS } from '@/data/orders';
 
-const kv = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
-    ? createClient({
-        url: process.env.KV_REST_API_URL,
-        token: process.env.KV_REST_API_TOKEN,
-    })
-    : null;
+const kv = (() => {
+    try {
+        if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+            // Validate URL protocol for @vercel/kv specifically
+            if (process.env.KV_REST_API_URL.startsWith('redis://')) {
+                console.warn('Vercel KV: internal Redis URL detected, skipping HTTP client init.');
+                return null;
+            }
+            return createClient({
+                url: process.env.KV_REST_API_URL,
+                token: process.env.KV_REST_API_TOKEN,
+            });
+        }
+    } catch (e) {
+        console.error('Failed to initialize KV client:', e);
+    }
+    return null;
+})();
 
 export async function getOrdersState(): Promise<Order[] | null> {
     try {
