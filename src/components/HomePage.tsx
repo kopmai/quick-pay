@@ -17,6 +17,17 @@ export default function HomePage() {
 
     const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [promptPayType, setPromptPayType] = useState<'phone' | 'id_card' | 'other'>('phone');
+    const [promptPayNumber, setPromptPayNumber] = useState('0812345678');
+
+    const [isEditingSettings, setIsEditingSettings] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const [selectedDept, setSelectedDept] = useState('ทั้งหมด');
+
     // Initial Load
     useEffect(() => {
         const loadData = async () => {
@@ -71,9 +82,154 @@ export default function HomePage() {
         loadData();
     }, []);
 
-    // ... (rest of state)
+    // Persistence
+    React.useEffect(() => {
+        if (!hasLoaded) return;
+        localStorage.setItem('quick-pay-orders', JSON.stringify(orders));
+        saveOrdersState(orders);
+    }, [orders, hasLoaded]);
 
-    // ...
+    React.useEffect(() => {
+        if (!hasLoaded) return;
+        localStorage.setItem('quick-pay-number', promptPayNumber);
+        localStorage.setItem('quick-pay-type', promptPayType);
+        savePromptPayConfig(promptPayNumber, promptPayType);
+    }, [promptPayNumber, promptPayType, hasLoaded]);
+
+    // Logic to get unique departments
+    const departments = useMemo(() => {
+        const deptMap = new Map<string, number>();
+        orders.forEach(o => {
+            if (!deptMap.has(o.department)) deptMap.set(o.department, 0);
+            if (o.status === 'pending') {
+                deptMap.set(o.department, deptMap.get(o.department)! + 1);
+            }
+        });
+        const sortedDepts = Array.from(deptMap.keys()).sort();
+        const deptObjects = sortedDepts.map(name => ({
+            name,
+            unpaidCount: deptMap.get(name) || 0
+        }));
+        const totalUnpaid = orders.filter(o => o.status === 'pending').length;
+        return [{ name: 'ทั้งหมด', unpaidCount: totalUnpaid }, ...deptObjects];
+    }, [orders]);
+
+    // Filter orders
+    const filteredOrders = useMemo(() => {
+        if (selectedDept === 'ทั้งหมด' || selectedDept === 'All') return orders;
+        return orders.filter(o => o.department === selectedDept);
+    }, [orders, selectedDept]);
+
+    const stats = useMemo(() => {
+        const totalOrders = orders.length;
+        const paidOrders = orders.filter(o => o.status === 'paid').length;
+        const paidRevenue = orders.filter(o => o.status === 'paid').reduce((acc, curr) => acc + curr.totalPrice, 0);
+        const totalRevenue = orders.reduce((acc, curr) => acc + curr.totalPrice, 0);
+        const paidBottles = orders.filter(o => o.status === 'paid').reduce((acc, curr) => acc + curr.quantity, 0);
+        const totalBottles = orders.reduce((acc, curr) => acc + curr.quantity, 0);
+        return { totalOrders, paidOrders, paidRevenue, totalRevenue, paidBottles, totalBottles };
+    }, [orders]);
+
+    // Selection Logic
+    const handleToggleSelect = (id: string) => {
+        const newSet = new Set(selectedOrderIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedOrderIds(newSet);
+    };
+
+    const handleSelectAll = (shouldSelect: boolean) => {
+        if (shouldSelect) {
+            // Select all PENDING in current filter
+            const newSet = new Set(selectedOrderIds);
+            filteredOrders.forEach(o => {
+                if (o.status === 'pending') newSet.add(o.id);
+            });
+            setSelectedOrderIds(newSet);
+        } else {
+            // Deselect all in current filter
+            const newSet = new Set(selectedOrderIds);
+            filteredOrders.forEach(o => {
+                if (newSet.has(o.id)) newSet.delete(o.id);
+            });
+            setSelectedOrderIds(newSet);
+        }
+    };
+
+    const isAllSelected = useMemo(() => {
+        const pendingOrders = filteredOrders.filter(o => o.status === 'pending');
+        if (pendingOrders.length === 0) return false;
+        return pendingOrders.every(o => selectedOrderIds.has(o.id));
+    }, [filteredOrders, selectedOrderIds]);
+
+    const bulkSelectionTotal = useMemo(() => {
+        return orders
+            .filter(o => selectedOrderIds.has(o.id))
+            .reduce((sum, o) => sum + o.totalPrice, 0);
+    }, [orders, selectedOrderIds]);
+
+    const handlePayClick = (order: Order) => {
+        setSelectedOrder(order);
+        setIsModalOpen(true);
+    };
+
+    const handleConfirmPayment = () => {
+        if (selectedOrder) {
+            if (selectedOrder.id === 'bulk-pay') {
+                // Confirm Bulk Payment
+                setOrders(prev => prev.map(o =>
+                    selectedOrderIds.has(o.id) ? { ...o, status: 'paid' } : o
+                ));
+                setSelectedOrderIds(new Set()); // Clear selection
+            } else {
+                // Confirm Single Payment
+                setOrders(prev => prev.map(o =>
+                    o.id === selectedOrder.id ? { ...o, status: 'paid' } : o
+                ));
+            }
+        }
+    };
+
+    const handleToggleStatus = (id: string, currentStatus: string) => {
+        if (currentStatus === 'paid') {
+            if (!confirm('⚠️ ยืนยันการย้อนสถานะ?\n\nคุณกำลังจะเปลี่ยนสถานะจาก "จ่ายแล้ว" กลับเป็น "รอชำระ"')) {
+                return;
+            }
+        }
+
+        setOrders(prev => prev.map(o =>
+            o.id === id ? { ...o, status: o.status === 'paid' ? 'pending' : 'paid' } : o
+        ));
+        if (selectedOrderIds.has(id)) handleToggleSelect(id);
+    };
+
+    const handleReset = () => {
+        if (confirm('⚠️ เตือน: คุณต้องการล้างสถานะ "จ่ายแล้ว" ทั้งหมดใช่ไหม?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้!')) {
+            setOrders(INITIAL_ORDERS);
+            setSelectedOrderIds(new Set());
+        }
+    };
+
+    const handleBulkPay = () => {
+        if (selectedOrderIds.size === 0) return;
+
+        const total = bulkSelectionTotal;
+        const count = selectedOrderIds.size;
+
+        handlePayClick({
+            id: 'bulk-pay',
+            orderNumber: 0,
+            customerName: `รวมยอด ${count} รายการ`,
+            department: 'Selected',
+            quantity: 0,
+            totalPrice: total,
+            status: 'pending',
+            createdAt: ''
+        });
+    };
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 font-sans relative">
