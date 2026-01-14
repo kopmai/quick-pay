@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+// export const dynamic = 'force-dynamic'; // Disabled for stability
+// export const runtime = 'nodejs'; // Disabled for stability
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 
