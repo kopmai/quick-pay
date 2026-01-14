@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+export const dynamic = 'force-dynamic';
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 
