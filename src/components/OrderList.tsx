@@ -182,7 +182,7 @@ export function OrderList({
                                             {/* Toggle Status Button */}
                                             {order.status === 'waiting_for_verification' ? (
                                                 <button
-                                                    onClick={() => onToggleStatus(order.id, 'paid')}
+                                                    onClick={() => onToggleStatus(order.id, 'waiting_for_verification')}
                                                     className="flex-1 bg-yellow-400 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-yellow-200 flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95 transition-all animate-pulse"
                                                 >
                                                     <CheckCircle2 size={24} />
