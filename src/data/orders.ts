@@ -5,7 +5,8 @@ export type Order = {
   department: string;
   quantity: number;
   totalPrice: number;
-  status: 'pending' | 'paid';
+  status: 'pending' | 'waiting_for_verification' | 'paid';
+  slipUrl?: string;
   createdAt: string;
 };
 

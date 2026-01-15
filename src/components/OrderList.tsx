@@ -167,14 +167,37 @@ export function OrderList({
                                             </button>
 
                                             {/* Toggle Status Button */}
-                                            <button
-                                                onClick={() => onToggleStatus(order.id, 'pending')}
-                                                className="flex-1 bg-orange-500 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-orange-200 flex items-center justify-center gap-2 hover:bg-orange-600 active:scale-95 transition-all"
-                                            >
-                                                <Circle size={24} />
-                                                <span className="text-lg">ยืนยัน</span>
-                                            </button>
+                                            {order.status === 'waiting_for_verification' ? (
+                                                <button
+                                                    onClick={() => onToggleStatus(order.id, 'paid')}
+                                                    className="flex-1 bg-yellow-400 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-yellow-200 flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95 transition-all animate-pulse"
+                                                >
+                                                    <CheckCircle2 size={24} />
+                                                    <span className="text-lg">ยืนยัน (ตรวจสลิป)</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => onToggleStatus(order.id, 'pending')}
+                                                    className="flex-1 bg-orange-500 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-orange-200 flex items-center justify-center gap-2 hover:bg-orange-600 active:scale-95 transition-all"
+                                                >
+                                                    <Circle size={24} />
+                                                    <span className="text-lg">ยืนยัน</span>
+                                                </button>
+                                            )}
                                         </>
+                                    )}
+
+                                    {/* Slip Button for Admin */}
+                                    {order.slipUrl && (
+                                        <a
+                                            href={order.slipUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-14 bg-blue-50 border border-blue-200 text-blue-500 rounded-xl flex items-center justify-center hover:bg-blue-100 active:scale-95 transition-all"
+                                            title="ดูสลิป"
+                                        >
+                                            <CheckSquare size={20} />
+                                        </a>
                                     )}
 
                                     {order.status === 'paid' && (

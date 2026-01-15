@@ -8,7 +8,7 @@ import { PaymentModal } from '@/components/PaymentModal';
 import { MoreVertical, Trash2, Coins, Check, QrCode, X, Zap } from 'lucide-react';
 import { getOrdersState, saveOrdersState, getPromptPayConfig, savePromptPayConfig } from '@/app/actions';
 
-export default function HomePage() {
+export default function AdminDashboard() {
     const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
     const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -199,6 +199,9 @@ export default function HomePage() {
                 return;
             }
         }
+
+        // Cycle: pending -> paid -> pending (Admin usually forces paid)
+        // If it was 'waiting_for_verification', also go to 'paid'
 
         setOrders(prev => prev.map(o =>
             o.id === id ? { ...o, status: o.status === 'paid' ? 'pending' : 'paid' } : o

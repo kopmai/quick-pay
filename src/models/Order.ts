@@ -7,7 +7,8 @@ export interface IOrder {
     department: string;
     quantity: number;
     totalPrice: number;
-    status: 'pending' | 'paid';
+    status: 'pending' | 'waiting_for_verification' | 'paid';
+    slipUrl?: string;
     createdAt: string;
 }
 
@@ -20,7 +21,8 @@ const OrderSchema = new Schema<IOrderDocument>({
     department: { type: String, required: true },
     quantity: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
-    status: { type: String, required: true, enum: ['pending', 'paid'], default: 'pending' },
+    status: { type: String, required: true, enum: ['pending', 'waiting_for_verification', 'paid'], default: 'pending' },
+    slipUrl: { type: String },
     createdAt: { type: String, required: true }
 }, {
     timestamps: true // Adds internal createdAt/updatedAt

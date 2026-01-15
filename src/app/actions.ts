@@ -1,5 +1,7 @@
 'use server';
 
+import { put } from '@vercel/blob';
+
 import dbConnect from '@/lib/db';
 import Order, { IOrder } from '@/models/Order';
 import Config from '@/models/Config';
@@ -113,5 +115,22 @@ export async function checkDbConnection() {
         }
     } catch (error: any) {
         return { ok: false, message: `Unexpected Error: ${error.message}` };
+    }
+}
+
+export async function uploadSlip(formData: FormData) {
+    try {
+        const file = formData.get('file') as File;
+        if (!file) throw new Error('No file uploaded');
+
+        const filename = `${Date.now()}-${file.name}`;
+        const blob = await put(filename, file, {
+            access: 'public',
+        });
+
+        return { success: true, url: blob.url };
+    } catch (error) {
+        console.error('Upload Error:', error);
+        return { success: false, error: 'Upload failed' };
     }
 }
