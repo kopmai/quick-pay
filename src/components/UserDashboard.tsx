@@ -6,7 +6,7 @@ import { DashboardStats } from '@/components/DashboardStats';
 import { UserOrderList } from '@/components/UserOrderList';
 import { UserPaymentModal } from '@/components/UserPaymentModal';
 import { Zap } from 'lucide-react';
-import { getOrdersState, uploadSlip, saveOrdersState } from '@/app/actions';
+import { getOrdersState, uploadSlip, saveOrdersState, getPromptPayConfig } from '@/app/actions';
 
 export default function UserDashboard() {
     const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
@@ -23,15 +23,26 @@ export default function UserDashboard() {
         const loadData = async () => {
             if (typeof window === 'undefined') return;
 
-            const serverOrders = await getOrdersState();
+            const [serverOrders, serverConfig] = await Promise.all([
+                getOrdersState(),
+                getPromptPayConfig()
+            ]);
+
             const localPhone = localStorage.getItem('quick-pay-number');
 
             if (serverOrders && serverOrders.length > 0) {
                 setOrders(serverOrders);
             }
-            if (localPhone) {
+
+            // Prioritize server config, fallback to local, then default
+            if (serverConfig && serverConfig.number) {
+                setPromptPayNumber(serverConfig.number);
+                // Optionally update local storage to sync
+                localStorage.setItem('quick-pay-number', serverConfig.number);
+            } else if (localPhone) {
                 setPromptPayNumber(localPhone);
             }
+
             setHasLoaded(true);
         };
         loadData();
