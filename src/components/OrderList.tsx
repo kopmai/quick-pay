@@ -166,6 +166,19 @@ export function OrderList({
                                                 <span className="text-lg">QR</span>
                                             </button>
 
+                                            {/* Slip Button (Middle if Waiting) */}
+                                            {order.status === 'waiting_for_verification' && order.slipUrl && (
+                                                <a
+                                                    href={order.slipUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 bg-blue-50 border border-blue-200 text-blue-500 rounded-xl py-3.5 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 active:scale-95 transition-all"
+                                                >
+                                                    <CheckSquare size={24} />
+                                                    <span className="text-lg">ตรวจสอบสลิป</span>
+                                                </a>
+                                            )}
+
                                             {/* Toggle Status Button */}
                                             {order.status === 'waiting_for_verification' ? (
                                                 <button
@@ -173,7 +186,7 @@ export function OrderList({
                                                     className="flex-1 bg-yellow-400 text-white rounded-xl py-3.5 font-bold shadow-lg shadow-yellow-200 flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95 transition-all animate-pulse"
                                                 >
                                                     <CheckCircle2 size={24} />
-                                                    <span className="text-lg">ยืนยัน (ตรวจสลิป)</span>
+                                                    <span className="text-lg">ยืนยัน</span>
                                                 </button>
                                             ) : (
                                                 <button
@@ -187,8 +200,8 @@ export function OrderList({
                                         </>
                                     )}
 
-                                    {/* Slip Button for Admin */}
-                                    {order.slipUrl && (
+                                    {/* Slip Button if NOT waiting (e.g. paid but has slip) */}
+                                    {order.slipUrl && order.status !== 'waiting_for_verification' && (
                                         <a
                                             href={order.slipUrl}
                                             target="_blank"
