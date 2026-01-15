@@ -41,13 +41,34 @@ export function UserPaymentModal({ isOpen, onClose, amount, customerName, target
     const handleSaveQR = () => {
         const canvas = canvasRef.current?.querySelector('canvas');
         if (canvas) {
-            const url = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `QR-${customerName}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                // Try modern way: toBlob
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `QR-${customerName}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                    } else {
+                        // Fallback to data URL
+                        const url = canvas.toDataURL('image/png');
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `QR-${customerName}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                }, 'image/png');
+            } catch (e) {
+                // Last resort: Open in new tab
+                const url = canvas.toDataURL('image/png');
+                window.open(url, '_blank');
+            }
         }
     };
 
