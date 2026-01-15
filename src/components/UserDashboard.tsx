@@ -121,7 +121,7 @@ export default function UserDashboard() {
                 {/* Search Input */}
                 <input
                     type="text"
-                    placeholder="ค้นหาชื่อลูกค้า..."
+                    placeholder="ค้นหาชื่อของคุณ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-lg outline-none focus:border-orange-500 shadow-sm"
