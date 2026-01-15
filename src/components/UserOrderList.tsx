@@ -28,6 +28,7 @@ export function UserOrderList({
                     {departments.map(dept => {
                         const isAll = dept.name === 'ทั้งหมด';
                         const isSelected = selectedDept === dept.name;
+                        const isComplete = !isAll && dept.unpaidCount === 0;
 
                         return (
                             <button
@@ -36,12 +37,22 @@ export function UserOrderList({
                                 className={cn(
                                     "relative px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ease-out flex items-center gap-2",
                                     isSelected
-                                        ? "bg-orange-500 text-white shadow-md shadow-orange-200 scale-105"
+                                        ? (isComplete && !isAll ? "bg-green-500 text-white shadow-md shadow-green-200 scale-105" : "bg-orange-500 text-white shadow-md shadow-orange-200 scale-105")
                                         : "bg-transparent text-gray-500 hover:bg-gray-50"
                                 )}
                             >
                                 <span>{dept.name}</span>
-                                {dept.unpaidCount > 0 && !isAll && (
+                                {!isAll && (
+                                    <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[10px] min-w-[20px] text-center font-black",
+                                        isSelected
+                                            ? "bg-white/20 text-white"
+                                            : (isComplete ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600")
+                                    )}>
+                                        {isComplete ? <Check size={12} strokeWidth={3} /> : dept.unpaidCount}
+                                    </span>
+                                )}
+                                {isAll && dept.unpaidCount > 0 && (
                                     <span className={cn(
                                         "px-1.5 py-0.5 rounded text-[10px] min-w-[20px] text-center font-black",
                                         isSelected ? "bg-white/20 text-white" : "bg-orange-100 text-orange-600"
