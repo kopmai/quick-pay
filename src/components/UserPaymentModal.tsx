@@ -38,36 +38,53 @@ export function UserPaymentModal({ isOpen, onClose, amount, customerName, target
 
     if (!isOpen) return null;
 
-    const handleSaveQR = () => {
+    const handleSaveQR = async () => {
         const canvas = canvasRef.current?.querySelector('canvas');
-        if (canvas) {
-            try {
-                // Try modern way: toBlob
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `QR-${customerName}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                    } else {
-                        // Fallback to data URL
-                        const url = canvas.toDataURL('image/png');
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `QR-${customerName}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+        if (!canvas) return;
+
+        try {
+            // Convert to Blob
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('Canvas to Blob failed');
+
+            // 1. Try Web Share API (Works best on iOS/Android for saving to Photos)
+            if (navigator.share) {
+                const file = new File([blob], `QR-${customerName}.png`, { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'QR Code Payment',
+                            text: `QR PromptPay for ${customerName}`
+                        });
+                        return; // Success, exit
+                    } catch (shareError) {
+                        // User might have cancelled share, ignore
+                        if ((shareError as Error).name !== 'AbortError') console.error(shareError);
+                        // If not abort, fall through to download
                     }
-                }, 'image/png');
-            } catch (e) {
-                // Last resort: Open in new tab
-                const url = canvas.toDataURL('image/png');
-                window.open(url, '_blank');
+                }
+            }
+
+            // 2. Fallback: Classic Download (Desktop / Non-sharing browsers)
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `QR-${customerName}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+
+        } catch (e) {
+            console.error('Save QR Failed:', e);
+            // 3. Last Resort: Open in new tab (User has to long-press)
+            const url = canvas.toDataURL('image/png');
+            const newTab = window.open();
+            if (newTab) {
+                newTab.document.body.innerHTML = `<img src="${url}" style="width:100%;height:auto;"> <p style="text-align:center;font-family:sans-serif;margin-top:20px;">กดค้างที่รูปเพื่อบันทึก (Long press to save)</p>`;
+            } else {
+                location.href = url; // Redirect if popup blocked
             }
         }
     };
